@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 
 import rospy
 from std_msgs.msg import String
@@ -6,22 +5,11 @@ from std_msgs.msg import Int64, Int16,Int16MultiArray,MultiArrayLayout,MultiArra
 import numpy as np
 import pickle
 import sys, select, termios, tty
-from threading import Thread
 
-#from pos_publisher_functions import initialize, encoder_sub_cb, control,pos_publish, getKey
-
-pre_rec_poses=[]
-pos_cmd_pub = rospy.Publisher('pos_cmd', Int16MultiArray, queue_size=10)
-move_pub=rospy.Publisher('move_cmd', Int16, queue_size=10)
-
-
-settings = termios.tcgetattr(sys.stdin)
 global base_loc
 global base_locs
-base_loc=-915
 global speed
-speed=150
-#pre recorded base loacations
+
 
 def initialize():
     global pre_rec_poses
@@ -82,7 +70,9 @@ def pos_publish():
     while not rospy.is_shutdown():
         int_base_loc=np.rint(base_loc)
         k,=np.where(base_locs==int_base_loc)
+        rospy.loginfo("k is %s" % k)
         pos_cmd.data=pre_rec_poses[k[0]][1]
+        rospy.loginfo("\n cmd: %s" % pos_cmd)
         pos_cmd_pub.publish(pos_cmd)
         rate.sleep()
 
@@ -92,15 +82,3 @@ def getKey():
     key = sys.stdin.read(1)
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
     return key
-
-
-
-rospy.Subscriber('encoder_pos', Int64, encoder_sub_cb)
-
-if __name__ == '__main__':
-    initialize()
-    Thread(target=pos_publish).start()
-    try:
-        control()
-    except rospy.ROSInterruptException:
-        pass
