@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-from std_msgs.msg import String
+from std_msgs.msg import String, Float32MultiArray
 from std_msgs.msg import Int64, Int16,Int16MultiArray,MultiArrayLayout,MultiArrayDimension
 import numpy as np
 import pickle
@@ -11,7 +11,7 @@ from threading import Thread
 #from pos_publisher_functions import initialize, encoder_sub_cb, control,pos_publish, getKey
 
 pre_rec_poses=[]
-pos_cmd_pub = rospy.Publisher('pos_cmd', Int16MultiArray, queue_size=10)
+pos_cmd_pub = rospy.Publisher('pos_cmd', Float32MultiArray, queue_size=10)
 move_pub=rospy.Publisher('move_cmd', Int16, queue_size=10)
 
 
@@ -78,11 +78,11 @@ def pos_publish():
     global base_locs
     global base_loc
     rate = rospy.Rate(5)
-    pos_cmd=Int16MultiArray()
+    pos_cmd=Float32MultiArray()
     while not rospy.is_shutdown():
         int_base_loc=np.rint(base_loc)
         k,=np.where(base_locs==int_base_loc)
-        pos_cmd.data=pre_rec_poses[k[0]][1]
+        pos_cmd.data=np.rad2deg(pre_rec_poses[k[0]][1])
         pos_cmd_pub.publish(pos_cmd)
         rate.sleep()
 
