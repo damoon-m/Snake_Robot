@@ -34,10 +34,36 @@ def initialize():
         pre_rec_poses =pre_rec_poses[0]
         base_locs=np.zeros(len(pre_rec_poses))
 
+    poses=np.zeros((len(pre_rec_poses),6))
     for i in range(len(pre_rec_poses)):
         base_locs[i]=pre_rec_poses[i][0]
+        for j in range(6):
+            poses[i,j]=np.rad2deg(pre_rec_poses[i][1][j])
+    poses=np.rint(fmap(poses,-180,180, -SERVO_MAX, SERVO_MAX))
+
+
+
+    pos_cmd_msg=Int16MultiArray()
+
+    """
+    pos_cmd_msg.layout.dim=[MultiArrayDimension(), MultiArrayDimension()]
+    pos_cmd_msg.layout.dim[0].size=len(pre_rec_poses)
+    pos_cmd_msg.layout.dim[0].stride=len(pre_rec_poses)
+    pos_cmd_msg.layout.dim[1].size=6
+    pos_cmd_msg.layout.dim[0].stride=6
+    """
+    pos_cmd_msg.data=poses.reshape([len(pre_rec_poses)*6])
+    pos_cmd_pub.publish(pos_cmd_msg)
+
+
+
+
+
+
+
 
     rospy.loginfo("length %i lkdjf" % len(pre_rec_poses))
+    rospy.loginfo(poses)
     rospy.loginfo(pre_rec_poses[0][0])
     rospy.loginfo(pre_rec_poses[0][1])
     rospy.loginfo(pre_rec_poses[0][1][5])
@@ -79,7 +105,7 @@ def pos_publish():
     global SERVO_MAX
     global base_locs
     global base_loc
-    rate = rospy.Rate(5)
+    rate = rospy.Rate(1)
     pos_cmd=Int16MultiArray()
     while not rospy.is_shutdown():
         int_base_loc=np.rint(base_loc)
@@ -107,7 +133,7 @@ rospy.Subscriber('encoder_pos', Int16, encoder_sub_cb)
 
 if __name__ == '__main__':
     initialize()
-    Thread(target=pos_publish).start()
+    #Thread(target=pos_publish).start()
     try:
         control()
     except rospy.ROSInterruptException:
