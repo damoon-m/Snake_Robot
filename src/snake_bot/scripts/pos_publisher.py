@@ -11,10 +11,11 @@ from threading import Thread
 #from pos_publisher_functions import initialize, encoder_sub_cb, control,pos_publish, getKey
 
 pre_rec_poses=[]
-pos_cmd_pub = rospy.Publisher('pos_cmd', Float32MultiArray, queue_size=10)
+pos_cmd_pub = rospy.Publisher('pos_cmd', Int16MultiArray, queue_size=10)
 move_pub=rospy.Publisher('move_cmd', Int16, queue_size=10)
 
-
+global SERVO_MAX
+SERVO_MAX= 498
 settings = termios.tcgetattr(sys.stdin)
 global base_loc
 global base_locs
@@ -75,16 +76,23 @@ def control():
         rate.sleep()
 
 def pos_publish():
+    global SERVO_MAX
     global base_locs
     global base_loc
     rate = rospy.Rate(5)
-    pos_cmd=Float32MultiArray()
+    pos_cmd=Int16MultiArray()
     while not rospy.is_shutdown():
         int_base_loc=np.rint(base_loc)
         k,=np.where(base_locs==int_base_loc)
-        pos_cmd.data=np.rad2deg(pre_rec_poses[k[0]][1])
+        pos_deg=np.rad2deg(pre_rec_poses[k[0]][1])
+        pos_servo=fmap(pos_deg,-180,180, -SERVO_MAX, SERVO_MAX)
+        pos_servo=np.rint(pos_servo)
+        pos_cmd.data=pos_servo
         pos_cmd_pub.publish(pos_cmd)
         rate.sleep()
+
+def fmap(x, x1, x2, y1, y2):
+    return((x-x1)*(y2-y1)/(x2-x1)+y1)
 
 def getKey():
     tty.setraw(sys.stdin.fileno())
@@ -95,7 +103,7 @@ def getKey():
 
 
 
-rospy.Subscriber('encoder_pos', Int64, encoder_sub_cb)
+rospy.Subscriber('encoder_pos', Int16, encoder_sub_cb)
 
 if __name__ == '__main__':
     initialize()

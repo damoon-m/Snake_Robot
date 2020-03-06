@@ -1,0 +1,2 @@
+apriltag:apriltag_ros/apriltag_ros:beginner_tutorials:snake_bot
+-G Unix Makefiles -DCATKIN_DEVEL_PREFIX=/home/mohamadi/catkin_ws/devel_isolated -DCMAKE_INSTALL_PREFIX=/home/mohamadi/catkin_ws/install_isolated
